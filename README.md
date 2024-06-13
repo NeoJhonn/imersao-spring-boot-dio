@@ -4,14 +4,14 @@
   negócio.
 
 - Spring-boot-starter:
-    - data-jpa: JPA - Hibernate
-    - data-mongodb
-    - web: container Tomcat aplicações REST
-    - web-service: arquitetura SOAP
-    - batch: JOBs de processo
-    - test: JUnit
-    - openfeign: Cliente HTTP em interfaces para consumo de APIs
-    - actuator: gerenciamento de monitoramento da aplicação
+  - data-jpa: JPA - Hibernate
+  - data-mongodb
+  - web: container Tomcat aplicações REST
+  - web-service: arquitetura SOAP
+  - batch: JOBs de processo
+  - test: JUnit
+  - openfeign: Cliente HTTP em interfaces para consumo de APIs
+  - actuator: gerenciamento de monitoramento da aplicação
 
 ## Configurando um projeto Spring Boot
 
@@ -81,6 +81,70 @@ public class SistemaMensagem {
 }
 ```
 
+## Properties Value
+
+- Arquivo application.properties: aqui você pode definir variáveis de ambiente, conexão como banco de dados, etc.
+
+```
+pring.application.name=first_steps_dio
+
+nome=Jhonny Azevedo
+email=jhonny.azevedo@gmail.com
+telefones=1145639871,1185239542
+```
+
+- @Value: com essa notação você pode pegar valores do application.properties e settar numa variável.
+
+```
+public class SistemaMensagem implements CommandLineRunner {
+
+    // você pode settar valores nos atributos com a notação @Value
+    // pegando esses valores do application.properties
+    @Value("${nome}")
+    private String name;
+    // você pode definir um valor default
+    // caso não ache a variável email, colocando ":valor padrão"
+    @Value("${email: email@email.padrao.com}")
+    private String email;
+    @Value("${telefones}")
+    private List<Long> telefone;
+}
+```
+
+## Configuration Properties
+
+- Atravez da notação @ConfigurationProperties você consegue pegar valores de um obejeto/Bean especificado no application.properties:
+
+- Arquivo application.properties:
+
+```
+remetente.nome=Mylena
+remetente.email=mystmilli@gmail.com
+```
+
+```
+@Configuration
+// aqui você define como sera o nome do bean/ojeto para pegar os dados do application.properties
+// a cada objeto Remetente criado, o Sprind vai settar os dados nos atributos definidos no application.properties
+@ConfigurationProperties(prefix = "remetente") // <-----------------
+public class Remetente {
+
+    private String nome;
+    private String email;
+}
+
+// pegando os dados com @Value do application.properties
+
+public class SistemaMensagem implements CommandLineRunner {
+
+    
+    @Value("${remetente.nome}")
+    private String name;
+    @Value("${remetente.email}")
+    private String email;
+ 
+
+```
 
 
 ## Notações Spring
@@ -96,7 +160,7 @@ public class SistemaMensagem {
   criar uma classe que a implemente:
 
 ```
-// Aqui passei direto o Bean no mais criando um CommandLineRunner 
+// Aqui passei direto o Bean no main criando um CommandLineRunner 
 @Bean
 public CommandLineRunner run () {
 	return args -> {
@@ -105,7 +169,7 @@ public CommandLineRunner run () {
 }
 ```
 
--- Você também pode criar uma classe para armazenar os seus @Beans e usar a anotação @Configuration:
+- Você também pode criar uma classe para armazenar os seus @Beans e usar a anotação @Configuration:
 
 ```
 @Configuration
@@ -119,7 +183,9 @@ public class Beans {
 }
 ```
 
----------> Continuar em Properties Value
+
+----------------------> Continuar Conceito de ORM e JPA
+
 
 
 
