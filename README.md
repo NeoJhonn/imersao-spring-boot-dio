@@ -183,8 +183,22 @@ public class Beans {
 }
 ```
 
+## Conceito de ORM e JPA
 
-----------------------> Continuar Conceito de ORM e JPA
+- JPA(Java Persistence API): é uma especificação baseada em interfaces, que através de um framework realiza operações de persistência
+  de objetos em Java.
+
+- ORM(Object Relational Mapping): é um recurso para aproximar o paradigma da orientação a objetos ao contexto de banco de dados
+  relacional.
+
+## Spring Data JPA
+
+- Adiciona uma camada sobre o JPA, usa todos os recursos definidos pela especificação JPA, especialmente os mapeamentos de entidade e
+  os recursosde persistência baseado em interfaces e anotações. Tem uma implementação sem código do padrão de repositório e a criação
+  de consultas de banco de dadis a partir de nomes de métodos.
+
+- Crie um projeto no spring initializr: https://start.spring.io/ , adicione as seguintes dependências: Spring Data JPA,
+  Postgres Database. 
 
 
 
