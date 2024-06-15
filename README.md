@@ -200,6 +200,261 @@ public class Beans {
 - Crie um projeto no spring initializr: https://start.spring.io/ , adicione as seguintes dependências: Spring Data JPA,
   Postgres Database. 
 
+## Spring Web
+
+- API(Interface Application Program): é um código que faz a ponte de comunicação entre duas aplicações distintas.
+
+- REST E RESTful: a API REST(Representational State Transfer), é como um guia de boas práticas e RESTful é a capacidade de determinado
+sistema aplicar os princípios Rest.
+
+- Princípios arquitetura RESTful:
+  - Cliente-servidor: portabilidade entre várias plataformas de interface do usuário e do sevidor.
+  - Interface Uniforme: intereção uniforme entre cliente e servidor, hypermedia(HATEOAS).
+  - Stateless
+  - Cache
+  - Camadas
+
+- HATEOAS(Hypermedia as the Engine of Application State): fornece aos clientes links que indicarão como poderá ser feita a navegação
+entre seus recursos. Quem for consumir a API deverá saber a rota principal, as respostas das requisições terão todas as demais rotas
+possíveis.
+
+- Para criar um projeto Spring Web basta adicionar a dependência ao pom do seu projeto:
+
+```
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+```
+
+### Criando um Controller
+
+```
+@RestController
+@RequestMapping("/welcome")
+public class WelcomeController {
+
+    @GetMapping
+    public String welcome() {
+        return "Welcome to the Spring Web API";
+    }
+}
+```
+
+## Criando um Repositório
+
+```
+@Repository
+public interface UserRepository extends JpaRepository<User, UUID> { <-------- <Objeto que será salvo, tipo de ID>
+
+}
+```
+
+## Documentando sua API como Swagger
+
+- Insira a dependência do Swagger no seu pom:
+
+```
+<!-- Documentação Swagger -->
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>2.2.0</version>
+		</dependency>
+```
+
+- Insira algumas informações no seu arquivo main:
+
+```
+@SpringBootApplication
+// Congigurações do Swagger, documentação
+@OpenAPIDefinition(
+		info = @Info(
+				title = "REST API",
+				description = "API para gerenciamento de usuários",
+				version = "1.0",
+				termsOfService = "Termo de uso: Open source"
+		)
+)
+public class RestApiApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(RestApiApplication.class, args);
+	}
+
+}
+
+```
+
+- Rode sua API e acesse a documentação através do endereço: http://localhost:8080/swagger-ui/index.html
+
+
+## Exception Handlers
+
+- É o código que estipula o que um progrma fará quando um evendo anômalo interromper o fluxo normal das instruções desse programa.
+
+- Crie um GlobalExceptionHandler:
+
+```
+import jakarta.annotation.Resource;
+import org.springframework.cglib.proxy.UndeclaredThrowableException;
+import org.springframework.context.MessageSource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+
+@RestControllerAdvice
+public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+    @Resource
+    private MessageSource messageSource;
+    private HttpHeaders headers(){
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        return headers;
+    }
+    private ResponseError responseError(String message,HttpStatus statusCode){
+        ResponseError responseError = new ResponseError();
+        responseError.setStatus("error");
+        responseError.setError(message);
+        responseError.setStatusCode(statusCode.value());
+        return responseError;
+    }
+    @ExceptionHandler(Exception.class)
+    private ResponseEntity<Object> handleGeneral(Exception e, WebRequest request) {
+        if (e.getClass().isAssignableFrom(UndeclaredThrowableException.class)) {
+            UndeclaredThrowableException exception = (UndeclaredThrowableException) e;
+            return handleBusinessException((BusinessException) exception.getUndeclaredThrowable(), request);
+        } else {
+            String message = messageSource.getMessage("error.server", new Object[]{e.getMessage()}, null);
+            ResponseError error = responseError(message,HttpStatus.INTERNAL_SERVER_ERROR);
+            return handleExceptionInternal(e, error, headers(), HttpStatus.INTERNAL_SERVER_ERROR, request);
+        }
+    }
+    @ExceptionHandler({BusinessException.class})
+    private ResponseEntity<Object> handleBusinessException(BusinessException e, WebRequest request) {
+        ResponseError error = responseError(e.getMessage(),HttpStatus.CONFLICT);
+        return handleExceptionInternal(e, error, headers(), HttpStatus.CONFLICT, request);
+    }
+}
+```
+
+- Crie Business Exception e ResponseError:
+
+```
+public class BusinessException extends RuntimeException {
+    public BusinessException(String mensagem) {
+        super(mensagem);
+    }
+    public BusinessException(String mensagem, Object ... params) {
+        super(String.format(mensagem, params));
+    }
+}
+
+-----------------------------
+
+public class ResponseError {
+    private Date timestamp = new Date();
+    private String status = "error";
+    private int statusCode = 400;
+    private String error;
+
+    public String getError() {
+        return error;
+    }
+    public void setError(String error) {
+        this.error = error;
+    }
+
+    public Date getTimestamp() {
+        return timestamp;
+    }
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public int getStatusCode() {
+        return statusCode;
+    }
+
+    public void setStatusCode(int statusCode) {
+        this.statusCode = statusCode;
+    }
+}
+```
+
+- Ai quando quiser um exceção personalizada lance um BusinessException:
+
+```
+@Service
+public class UserService {
+
+    @Autowired
+    private UserRepository repository;
+
+    public void addUsers(User user) {
+        User existingUser = repository.findByLogin(user.getLogin());
+        if (existingUser != null) {
+            throw new BusinessException("Usuário já cadastrado!"); <-------------------
+        }
+        repository.save(user);
+    }
+}
+```
+
+
+
+### Notações Spring Web
+
+- @RequestMapping("/prefixo"): aqui você define uma URI comum a todos os recurso do controller.
+
+- @GetMapping: requisição HTTP do tipo GET.
+
+- @PostMapping: requisição HTTP do tipo Post.
+
+- @PutMapping: requisição HTTP do tipo Put.
+
+- @DeleteMapping: requisição HTTP do tipo DELETE.
+
+- @RequestBody: converte um JSON para o tipo de objeto esperado como parâmetro no método.
+
+- @PathVariable: destermina qual parta da URI será composta por um parâmetro recebido na requisição.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
