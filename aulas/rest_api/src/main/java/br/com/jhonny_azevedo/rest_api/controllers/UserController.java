@@ -1,6 +1,7 @@
 package br.com.jhonny_azevedo.rest_api.controllers;
 import br.com.jhonny_azevedo.rest_api.models.User;
 import br.com.jhonny_azevedo.rest_api.repositories.UserRepository;
+import br.com.jhonny_azevedo.rest_api.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,13 +15,12 @@ public class UserController {
     @Autowired
     private UserRepository repository;
 
+    @Autowired
+    private UserService  service;
+
     @PostMapping("/add")
     private void addUsers(@RequestBody User user) {
-        User existingUser = repository.findByLogin(user.getLogin());
-        if (existingUser != null) {
-            throw new RuntimeException("User already exists");
-        }
-        repository.save(user);
+        service.addUsers(user);
     }
 
     @GetMapping("/list")
